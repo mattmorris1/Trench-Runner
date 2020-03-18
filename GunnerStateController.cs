@@ -24,15 +24,20 @@ public class GunnerStateController : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        //Gets reference to audio source
         audioSource = GetComponent<AudioSource>();
+        //Set the starting state to idle
         SetState(new GunnerIdleState(this));
     }
 
     void FixedUpdate()
     {
+        //Check for transitions and act on the current state
         currentState.CheckTransitions();
         currentState.Act();
     }
+
+    //Used to switch from the last state to the new state, updates the game object to show the current state
     public void SetState(GunnerState state)
     {
         if (currentState != null)
@@ -48,14 +53,17 @@ public class GunnerStateController : MonoBehaviour
             currentState.OnStateEnter();
         }
     }
+
+    //This code is used to check if the enemy AI can see the player object.
     bool CheckLineOfSight(GameObject player)
     {
-        //code here to check line of sight to player object
         target = player;
         Vector3 targetDir = target.transform.position - transform.position;
         float angle = Vector3.Angle(targetDir, transform.forward);
+        //Raycast to the player, check what is returned by the recast
         RaycastHit hitInfo;
         Physics.Raycast(transform.position, (target.transform.position - transform.position), out hitInfo, 1000);
+        //Check if the player is in front of the enemy in its cone of vision and check the raycast to see if anything is in the way of the player
         if (hitInfo.collider.tag == player.tag || hitInfo.collider.tag == "Shield" || hitInfo.collider.tag == "Gun")
         {
             return true;
@@ -76,10 +84,11 @@ public class GunnerStateController : MonoBehaviour
         {
             foreach (GameObject player in players)
             {
-
+                //If there's multiple players this finds the nearest one and uses that for its detection
                 float dis = Vector3.Distance(transform.position, player.transform.position);
                 nearestDetectedDistance = 500.0f;
                 nearestDetectedPlayer = null;
+                //Calling the previous function to check if there's line of sight on the player, then see if its within detection range
                 bool canSee = CheckLineOfSight(player);
                 if (canSee == true && dis < 500)
                 {
@@ -93,9 +102,11 @@ public class GunnerStateController : MonoBehaviour
         }
         return nearestDetectedPlayer;
     }
-    //This function will be used to fire once implemented
+    //This function is used to fire.
     public void fire(GameObject target)
     {
+        //This code determines if the next shot should be fired from the left or right gun barrel, allowing it to fire each shot from the other barrel
+        //Decides which spawn point to create the bullet at
         if(leftFire == true)
         {
             pos = bulletSpawnLeft.transform.position;
@@ -108,13 +119,16 @@ public class GunnerStateController : MonoBehaviour
             rot = Quaternion.LookRotation(target.transform.position - bulletSpawnRight.transform.position);
             leftFire = true;
         }
+        //Plays gunshot noise
         audioSource.PlayOneShot(gunShot, 0.6F);
+        //Creates a new bullet at the bullet spawn, gives it a slight variation to the bullet to make it less accurate, then instantiates the new bullet
         rot.x = rot.x + UnityEngine.Random.Range(-0.04f, 0.04f);
         rot.y = rot.y + UnityEngine.Random.Range(-0.04f, 0.04f);
         rot.z = rot.z + UnityEngine.Random.Range(-0.04f, 0.04f);
         GameObject newBullet = Instantiate(bullet, pos, rot);
     }
 
+    //Checks to see if the object collided with a bullet game object, and destroys this AI object if it did
     public void OnCollisionEnter(Collision collision)
     {
         if (collision.gameObject.tag == "Bullet")

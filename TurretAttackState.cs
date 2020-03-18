@@ -6,8 +6,10 @@ public class TurretAttackState : TurretState
 {
     float targetTime = 1.0f;
     GameObject enemy;
-    // Start is called before the first frame update
+    
     public TurretAttackState(TurretStateController turretStateController) : base(turretStateController) { }
+
+    //Checks if the player left the line of sight
     public override void CheckTransitions()
     {
         if (turretStateController.CheckSight() == null)
@@ -16,6 +18,7 @@ public class TurretAttackState : TurretState
         }
     }
 
+    //Has the turret face the player, wait for 1 second and then fire at the player
     public override void Act()
     {
         turretStateController.gunArm.transform.LookAt(enemy.transform);
@@ -26,6 +29,8 @@ public class TurretAttackState : TurretState
             targetTime = 1.0f;
         }
     }
+
+    //Looks for the player
     public override void OnStateEnter()
     {
         enemy = turretStateController.CheckSight();
